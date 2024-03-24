@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Node CRUD API</title>
+</head>
+
+<body>
+    <h1>Node CRUD API</h1>
+    <form id="userForm">
+        <input type="text" id="name" placeholder="Name" required>
+        <input type="email" id="email" placeholder="Email" required>
+        <input type="text" id="id" hidden>
+        <button type="submit" id="btn">Add User</button>
+    </form>
+    <ul id="userList"></ul>
+
+    <script>
+        document.getElementById('userForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            if (document.getElementById('btn').textContent === 'Add User') {
+                const response = await fetch('http://localhost:3000/users', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name, email })
+                });
+                if (response.ok) {
+                    console.log(response.status);
+                    document.getElementById('name').value = '';
+                    document.getElementById('email').value = '';
+                    fetchUsers();
+                } else {
+                    console.error('Failed to create user');
+                }
+            } else {
+                const id = document.getElementById('id').value;
+                const response = await fetch(`http://localhost:3000/users/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name, email })
+                });
+                if (response.ok) {
+                    console.log(response.status);
+                    document.getElementById('name').value = '';
+                    document.getElementById('email').value = '';
+                    fetchUsers();
+                } else {
+                    console.error('Failed to create user');
+                }
+                document.getElementById('btn').textContent = 'Add User';
+            }
+        });
+
+        async function fetchUsers() {
+            const response = await fetch('http://localhost:3000/users');
+            const users = await response.json();
+            const userList = document.getElementById('userList');
+            userList.innerHTML = '';
+            users.forEach(user => {
+                const li = document.createElement('li');
+                li.textContent = `${user.name} - ${user.email}`;
+                const btn = document.createElement('button');
+                btn.textContent = 'Edit';
+                btn.onclick = () => editUser(user.id);
+                li.appendChild(btn);
+                const btn2 = document.createElement('button');
+                btn2.textContent = 'Delete';
+                btn2.onclick = () => removeUser(user.id);
+                li.appendChild(btn2);
+                userList.appendChild(li);
+            });
+        }
+
+        async function editUser(id) {
+            const response = await fetch(`http://localhost:3000/users/${id}`);
+            const user = await response.json();
+            console.log(user);
+            document.getElementById('btn').textContent = 'Update User';
+            document.getElementById('name').value = user.name;
+            document.getElementById('email').value = user.email;
+            document.getElementById('id').value = user.id;
+        };
+
+        async function removeUser(id) {
+            const response = await fetch(`http://localhost:3000/users/${id}`, {
+                method: 'DELETE'
+            });
+            if (response.ok) {
+                console.log('User deleted successfully');
+                fetchUsers();
+            } else {
+                console.error('Failed to delete user');
+            }
+        }
+
+        fetchUsers();
+    </script>
+</body>
+
+</html>
